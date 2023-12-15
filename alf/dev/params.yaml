@@ -1,0 +1,10 @@
+data_files:
+  active_losses: Active-Losses-2019-2021.csv
+  ntc: NTC_2019_2021.csv
+  renewables: eq_renewables_2019-2021.csv
+  temperature: eq_temp_2019-2021.csv
+dt_col:
+  active_losses: Zeitstempel
+  ntc: datetime
+  renewables: dateime
+  temperature: datetime
