@@ -9,8 +9,9 @@ target_col:
   active_losses
 curated_data_file: curated_data.csv
 fe_file: features.csv
-preprocessor_file: preprocess_unfitted.pkl
+preprocessor_file: artifacts/preprocess_unfitted.pkl
 n_lag: 168
+n_forecast: 23
 cat_cols:
   - weekend
   - workhour
@@ -27,4 +28,5 @@ cyclical_cols:
   - quarter_cos
   - wday_sin
   - wday_cos
-
+train_start: 2019-01-01 00:00:00
+train_end: 2020-12-31 23:00:00

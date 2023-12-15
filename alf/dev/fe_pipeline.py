@@ -15,7 +15,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
-from joblib import dump
+from pickle import dump
 
 
 # Set the current working directory to the directory of this file
@@ -38,8 +38,6 @@ try:
 except Exception as e:
     logging.error(f"Error loading YAML file: {e}")
 
-# Set up logging
-logging.basicConfig(filename='log_file', level=logging.ERROR)
 
 def import_curated_data(curated_data_file, dt_col, datadir=datadir):
     """Import curated data"""
@@ -134,18 +132,18 @@ def cyclical_encoding(df):
 
 def create_target_lags(df, dt_col, n_lag, target_col, fe_file):
     """Create target lags."""
-    df["date"] = df[dt_col].dt.date
+    df[dt_col] = pd.to_datetime(df[dt_col])
 
-    days = df[dt_col].tolist()
-
+    hours = df[dt_col].tolist()
     lag_lists = []
-    for day_idx, day in enumerate(days):
-        prior_cutoff = (day - pd.Timedelta("1 day")).strftime('%Y-%m-%d')
-        prior_cutoff = pd.to_datetime(prior_cutoff).date()
-        lags = df.query("date <= @prior_cutoff").tail(n_lag)[target_col].tolist()
+    for hour_idx, hour in enumerate(hours):
+        prior_cutoff = (hour - pd.Timedelta("1 hour"))
+        # .strftime('%Y-%m-%d %H:%M:%S')
+        # prior_cutoff = pd.to_datetime(prior_cutoff)
+        lags = df.query(f"{dt_col} <= @prior_cutoff").tail(n_lag)[target_col].tolist()
         lag_lists.append(lags)
     lag_df = pd.DataFrame(lag_lists).add_prefix("target_lag_")
-    df = pd.concat([df.drop("date", axis=1), lag_df], axis=1)
+    df = pd.concat([df, lag_df], axis=1)
 
     df = df.to_csv(os.path.join(datadir, fe_file), index=False)
 
@@ -189,6 +187,7 @@ def fe_pipeline(
         ],
         remainder="passthrough",
     )
+    print("preprocessor created.")
 
     dump(
         preprocessor,
@@ -212,17 +211,19 @@ if __name__ == "__main__":
 
     df = import_curated_data(CURATED_DATA_FILE, dt_col=DT_COL)
     holiday_df = create_holiday(df, DT_COL)
-    df = create_time_features(df, dt_col=DT_COL, holiday_df=holiday_df)\
-        .pipe(cyclical_encoding)\
-            .pipe(
-                create_target_lags,
-                dt_col=DT_COL,
-                n_lag=N_LAG,
-                target_col=TARGET_COL,
-                fe_file=FE_FILE
-            )
+    df_features = create_time_features(df, dt_col=DT_COL, holiday_df=holiday_df)\
+        .pipe(cyclical_encoding)
+    
+            # .pipe(
+            #     create_target_lags,
+            #     dt_col=DT_COL,
+            #     n_lag=N_LAG,
+            #     target_col=TARGET_COL,
+            #     fe_file=FE_FILE
+            # )
+    
     fe_pipeline(
-        df=df,
+        df=df_features,
         dt_col=DT_COL,
         target_col=TARGET_COL,
         cat_cols=CAT_COLS,
@@ -230,6 +231,6 @@ if __name__ == "__main__":
         preprocessor_file=PREPROCESSOR_FILE
     )
 
-    print(df.head())
-    print(df.info())
-    print(df.describe())
+    print(df_features.head())
+    print(df_features.info())
+    print(df_features.describe())
