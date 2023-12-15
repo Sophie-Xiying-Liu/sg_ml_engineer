@@ -4,8 +4,27 @@ data_files:
   renewables: eq_renewables_2019-2021.csv
   temperature: eq_temp_2019-2021.csv
 dt_col:
-  active_losses: Zeitstempel
-  ntc: datetime
-  renewables: dateime
-  temperature: datetime
+  datetime
+target_col:
+  active_losses
 curated_data_file: curated_data.csv
+fe_file: features.csv
+preprocessor_file: preprocess_unfitted.pkl
+n_lag: 168
+cat_cols:
+  - weekend
+  - workhour
+  - year
+  - holiday_name
+cyclical_cols:
+  - hour_sin
+  - hour_cos
+  - week_hour_sin
+  - week_hour_cos
+  - month_sin
+  - month_cos
+  - quarter_sin
+  - quarter_cos
+  - wday_sin
+  - wday_cos
+

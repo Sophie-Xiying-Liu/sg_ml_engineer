@@ -35,7 +35,7 @@ except Exception as e:
 logging.basicConfig(filename='log_file', level=logging.ERROR)
 
 
-def create_df(data_files, datadir=datadir):
+def create_df(data_files, dt_col, datadir=datadir):
     """ Creates the dataset.
     Args:
         data_files (dict): The data files directory.
@@ -58,20 +58,20 @@ def create_df(data_files, datadir=datadir):
                 .agg(MWh=("kWh", "sum"))\
                     .reset_index()
     active_losses = active_losses.rename(
-        columns={"Zeitstempel": "datetime", "MWh": "active_losses"}
+        columns={"Zeitstempel": dt_col, "MWh": "active_losses"}
     )
 
     # Import ntc data
-    ntc = pd.read_csv(os.path.join(datadir, data_files["ntc"]), parse_dates=["datetime"])
+    ntc = pd.read_csv(os.path.join(datadir, data_files["ntc"]), parse_dates=[dt_col])
 
     # # Import renewable data
-    renewables = pd.read_csv(os.path.join(datadir, data_files["renewables"]), parse_dates=["datetime"])
+    renewables = pd.read_csv(os.path.join(datadir, data_files["renewables"]), parse_dates=[dt_col])
     postfix = " [MW]"
     renewables.columns = renewables.columns.str.replace(f"{postfix}$", "")
 
     # Didn't import temperature data due to data missing
-    # temperature = pd.read_csv(os.path.join(datadir, data_files["temperature"]), parse_dates=["datetime"])
-    # temperature = temperature.assign(datetime=lambda x: x["datetime"] - pd.Timedelta("1 hour"))
+    # temperature = pd.read_csv(os.path.join(datadir, data_files["temperature"]), parse_dates=[dt_col)
+    # temperature = temperature.assign(datetime=lambda x: x[dt_col] - pd.Timedelta("1 hour"))
 
     # Merge dataframes
     df = active_losses.merge(ntc, on='datetime', how='left')\
@@ -80,7 +80,7 @@ def create_df(data_files, datadir=datadir):
     
     return df
 
-def check_timestamp(df, col="datetime"):
+def check_timestamp(df, dt_col):
     """ Checks if the timestamp is complete and without duplicates.
     Args:
         df (pd): The dataset.
@@ -89,23 +89,21 @@ def check_timestamp(df, col="datetime"):
         bool: True if the timestamp is continuous, False otherwise.
     """
     # get the first and last timestamp
-    print("check_timestamp")
-
-    first_ts = df[col].min()
-    last_ts = df[col].max()
+    first_ts = df[dt_col].min()
+    last_ts = df[dt_col].max()
     complete_timestamp = pd.date_range(first_ts, last_ts, freq="H")
 
     # Check duplicates
-    df_duplicates = df[df[col].duplicated()]
+    df_duplicates = df[df[dt_col].duplicated()]
     if not df_duplicates.empty:
         logging.error(
-            f"Found duplicate timestamps: {df_duplicates[col].unique()}"
+            f"Found duplicate timestamps: {df_duplicates[dt_col].unique()}"
         )
         # Drop duplicates
-        df = df[~df[col].duplicated()]
+        df = df[~df[dt_col].duplicated()]
 
     # # Check if the timestamp is complete
-    df_missing = complete_timestamp.difference(df[col])
+    df_missing = complete_timestamp.difference(df[dt_col])
     if not df_missing.empty:
         logging.error(
             f"Found missing timestamps: {df_missing}"
@@ -120,7 +118,7 @@ def check_timestamp(df, col="datetime"):
 
     return df
 
-def clean_data(df):
+def clean_data(df, curated_data_file):
     """ Cleans the dataset.
     Args:
         df (pd): The dataset.
@@ -128,21 +126,26 @@ def clean_data(df):
         pd: The cleaned dataset.
     """
     # Check and fill missing values
-    print("clean_data")
-    nan_locations = df.iloc[:, 1:].isna().any(axis=1)
-    print(df[nan_locations])
-    # for column in nan_locations.columns:
-    #     for index, is_nan in nan_locations[column].iteritems():
-    #         if is_nan:
-    #             logging.info(f"NaN value found in column '{column}' at index {index}")
+    nan_locations = df[1:].isna()
+
+    for column in nan_locations.columns:
+        for index, is_nan in nan_locations[column].items():
+            if is_nan:
+                logging.info(f"NaN value found in column '{column}' at index {index}")
 
     # Interpolate missing values
-    # df = df.interpolate(method="polynomial", order=2, limit_direction="both")
+    df = df.ffill().bfill()
+
+    df.to_csv(os.path.join(datadir, curated_data_file), index=False)
 
     return df
 
+
 if __name__ == "__main__":
     DATA_FILES = params["data_files"]
-    create_df(data_files=DATA_FILES)\
-        .pipe(check_timestamp)\
-            .pipe(clean_data)
+    DT_COL = params["dt_col"]
+    CURATED_DATA_FILE = params["curated_data_file"]
+
+    df = create_df(data_files=DATA_FILES, dt_col=DT_COL)\
+            .pipe(check_timestamp, dt_col=DT_COL)\
+                .pipe(clean_data, CURATED_DATA_FILE)
