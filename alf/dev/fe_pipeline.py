@@ -214,14 +214,6 @@ if __name__ == "__main__":
     df_features = create_time_features(df, dt_col=DT_COL, holiday_df=holiday_df)\
         .pipe(cyclical_encoding)
     
-            # .pipe(
-            #     create_target_lags,
-            #     dt_col=DT_COL,
-            #     n_lag=N_LAG,
-            #     target_col=TARGET_COL,
-            #     fe_file=FE_FILE
-            # )
-    
     fe_pipeline(
         df=df_features,
         dt_col=DT_COL,
@@ -230,7 +222,3 @@ if __name__ == "__main__":
         cyclical_cols=CYCLICAL_COLS,
         preprocessor_file=PREPROCESSOR_FILE
     )
-
-    print(df_features.head())
-    print(df_features.info())
-    print(df_features.describe())
