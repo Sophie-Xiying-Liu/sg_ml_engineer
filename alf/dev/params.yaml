@@ -8,3 +8,4 @@ dt_col:
   ntc: datetime
   renewables: dateime
   temperature: datetime
+curated_data_file: curated_data.csv
