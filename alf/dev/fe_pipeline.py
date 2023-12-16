@@ -12,7 +12,7 @@ import holidays
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder, LabelEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from pickle import dump
@@ -96,7 +96,8 @@ def create_time_features(df, dt_col, holiday_df):
                 .drop(["holiday_date", "day"], axis=1)\
                     .assign(
                         holiday_name = lambda x: np.where(
-                            x["holiday_name"].isna(), "none", x["holiday_name"]
+                            # x["holiday_name"].isna(), "none", x["holiday_name"]
+                            x["holiday_name"].isna(), 0, 1
                             )
                             )
     return df
@@ -158,6 +159,7 @@ def fe_pipeline(
         dt_col,
         target_col,
         cat_cols,
+        # label_cols,
         cyclical_cols,
         preprocessor_file,
         ):
@@ -167,8 +169,11 @@ def fe_pipeline(
         col for col in df.columns if col not in [dt_col, target_col]
     ]
     num_cols = [
-        col for col in pipeline_cols if col not in [cat_cols, cyclical_cols]
+        col for col in pipeline_cols if col not in cat_cols\
+            # and col not in label_cols\
+            and col not in cyclical_cols
     ]
+    
 
     numeric_transformer = Pipeline(
         steps=[("scaler", StandardScaler())]
@@ -180,11 +185,17 @@ def fe_pipeline(
             ("encoder", OneHotEncoder(sparse_output=False, handle_unknown="ignore")),
         ]
     )
+    # label_transformer = Pipeline(
+    #     steps=[
+    #         ("encoder", LabelEncoder()),
+    #     ]
+    # )
 
     preprocessor = ColumnTransformer(
         transformers=[
             ("numeric", numeric_transformer, num_cols),
             ("categorical", categorical_transformer, cat_cols),
+            # ("label", label_transformer, label_cols),
         ],
         remainder="passthrough",
     )
@@ -207,6 +218,7 @@ if __name__ == "__main__":
     N_LAG = params["n_lag"]
     TARGET_COL = params["target_col"]
     CAT_COLS = params["cat_cols"]
+    # LABEL_COLS = params["label_cols"]
     CYCLICAL_COLS = params["cyclical_cols"]
     FE_FILE = params["fe_file"]
     PREPROCESSOR_FILE = params["preprocessor_file"]
@@ -229,5 +241,6 @@ if __name__ == "__main__":
         target_col=TARGET_COL,
         cat_cols=CAT_COLS,
         cyclical_cols=CYCLICAL_COLS,
+        # label_cols=LABEL_COLS,
         preprocessor_file=PREPROCESSOR_FILE
     )

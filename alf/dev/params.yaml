@@ -15,8 +15,9 @@ n_lag: 168
 n_forecast: 24
 cat_cols:
   - weekend
-  - workhour
+  - work_hour
   - year
+#label_cols:
   - holiday_name
 cyclical_cols:
   - hour_sin

@@ -9,8 +9,13 @@ import pandas as pd
 import numpy as np
 import yaml
 import logging
-from pickle import load
-import pprint
+from pickle import load, dump
+import lightgbm as lgb
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import r2_score
+
 
 
 # Set the current working directory to the directory of this file
@@ -81,7 +86,7 @@ def create_sets(df, dt_col, target_col, train_start, train_end):
     y_train = df_train[target_cols]
 
     X_test = df_test[feature_cols]
-    y_test = df_test[target_col]
+    y_test = df_test[target_cols]
 
     return X_train, y_train, X_test, y_test
 
@@ -106,8 +111,15 @@ def fe_transform(X_train, preprocessor_file):
 
 def train_model(X_train, y_train, X_val, y_val, model, model_name):
     """Train model"""
+
+
     model.fit(X_train, y_train)
     y_pred = model.predict(X_val)
+
+    model_path = os.path.join(os.path.dirname(__file__), f"models/{model_name}.pickle")
+    with open(model_path, 'wb') as file:
+        dump(model, file)
+
     return y_pred
 
 
@@ -133,15 +145,15 @@ if __name__ == "__main__":
         n_forecast=N_FORECAST,
         input_file=INPUT_FILE
     )
-
-    # X_train, y_train, X_test, y_test = create_sets(
-    #     df,
-    #     dt_col=DT_COL,
-    #     target_col=TARGET_COL,
-    #     train_start=TRAIN_START,
-    #     train_end=TRAIN_END,
-    # )
-    
+    print("multi-step output created")
+    X_train, y_train, X_test, y_test = create_sets(
+        df,
+        dt_col=DT_COL,
+        target_col=TARGET_COL,
+        train_start=TRAIN_START,
+        train_end=TRAIN_END,
+    )
+    print("train test split created")
     # X_train_transformed, X_test_transformed = fe_transform(
     #     X_train,
     #     preprocessor_file=PREPROCESSOR_FILE,
