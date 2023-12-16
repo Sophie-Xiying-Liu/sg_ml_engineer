@@ -120,26 +120,31 @@ def fe_transform(X_train, X_test, preprocessor_file):
 
     return X_train_transformed, X_test_transformed
 
-def train_model(lgbm_params, X_train_transformed, y_train, X_test_transformed, y_test, model_name):
+def train_model(X_train_transformed, y_train):
     """Train model"""
 
     # define the lgbm objective fct for Optuna tuning
     def objective(trial):
-        params = {
+        lgbm_params = {
             "objective": "regression",
             "metric": "rmse",
             "boosting_type": "gbdt",
             "n_estimators": trial.suggest_int("n_estimators", 7000, 9000, step=50),
             "learning_rate": trial.suggest_float("learning_rate", 0.04, 0.07),
             "num_leaves": trial.suggest_int("num_leaves", 44, 50),
-            "min_child_samples": trial.suggest_int("min_child_samples", 25, 30),
-            "min_child_weight": trial.suggest_float("min_child_weight", 0.00045, 0.00055),
-            "subsample": trial.suggest_float("subsample", 0.60, 0.70),
-            "colsample_bytree": trial.suggest_float("colsample_bytree", 0.7, 0.9),
+            # "min_child_samples": trial.suggest_int("min_child_samples", 25, 30),
+            # "min_child_weight": trial.suggest_float("min_child_weight", 0.00045, 0.00055),
+            # "subsample": trial.suggest_float("subsample", 0.60, 0.70),
+            # "colsample_bytree": trial.suggest_float("colsample_bytree", 0.7, 0.9),
             "reg_alpha": trial.suggest_float("reg_alpha", 0.9, 1.0),
         }
 
-        metrics = []
+        metrics_dict = {
+            "rmse": [],
+            "mae": [],
+            "r2": [],
+            "mape": [],
+        }
 
         tss = TimeSeriesSplit(n_splits=3)
         for train_index, val_index in tss.split(X_train_transformed):
@@ -162,20 +167,39 @@ def train_model(lgbm_params, X_train_transformed, y_train, X_test_transformed, y
             r2 = r2_score(y_val_cv.values.flatten(), y_val_pred.flatten())
             mape = mean_absolute_percentage_error(y_val_cv.values.flatten(), y_val_pred.flatten())
 
+            metrics_dict['rmse'].append(rmse)
+            metrics_dict['mae'].append(mae)
+            metrics_dict['r2'].append(r2)
+            metrics_dict['mape'].append(mape)
 
             print(f"RMSE: {rmse}")
             print(f"MAE: {mae}")
             print(f"R2: {r2}")
             print(f"MAPE: {mape}")
         
-        model_path = os.path.join(os.path.dirname(__file__), f"models/{model_name}.pickle")
-        with open(model_path, 'wb') as file:
-            dump(model, file)
-        print("model saved")
+        average_performance = {
+            metric: np.mean(metrics_dict[metric]) for metric in metrics_dict
+        }
+        print(f"Average Performance: {average_performance}")
+            
+    # Define Optuna's lgbm tuner
+    sampler = TPESampler(seed=42) # use TPESampler for Bayesian optimization
+    study = optuna.create_study(sampler=sampler, direction='minimize', study_name="losses_forecast_lgbm")
+    study.optimize(
+        objective,
+        n_trials=10,
+        show_progress_bar=True,
+    )
 
-        break
+    # get the best params
+    best_params = study.best_params
+    
+    # model_path = os.path.join(os.path.dirname(__file__), f"models/{model_name}.pickle")
+    # with open(model_path, 'wb') as file:
+    #     dump(model, file)
+    # print("model saved")
 
-    return model, rmse, mae, r2, mape
+    return best_params
 
 
 if __name__ == "__main__":
@@ -188,7 +212,6 @@ if __name__ == "__main__":
     TRAIN_END = params["train_end"]
     PREPROCESSOR_FILE = params["preprocessor_file"]
     N_SPLITS = params["n_splits"]
-    LGBM_PARAMS = params["lgbm_params"]
 
 
     df = import_fe_file(
@@ -217,15 +240,11 @@ if __name__ == "__main__":
         preprocessor_file=PREPROCESSOR_FILE,
     )
 
-    model, rmse, mae, r2, mape = (
-        train_model(
-            lgbm_params=LGBM_PARAMS,
+    best_params = train_model(
             X_train_transformed=X_train_transformed,
             y_train=y_train,
-            X_test_transformed=X_test_transformed,
-            y_test=y_test,
-            model_name='test_model_2')
-    )
+        )
+
     
 
     # print(df.head())
