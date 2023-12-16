@@ -1,3 +1,4 @@
+alembic==1.13.0
 anyio==4.1.0
 appnope==0.1.3
 argon2-cffi==23.1.0
@@ -13,6 +14,7 @@ certifi==2023.11.17
 cffi==1.16.0
 charset-normalizer==3.3.2
 click==8.1.7
+colorlog==6.8.0
 comm==0.2.0
 debugpy==1.8.0
 decorator==5.1.1
@@ -21,6 +23,8 @@ exceptiongroup==1.2.0
 executing==2.0.1
 fastjsonschema==2.19.0
 fqdn==1.5.1
+greenlet==3.0.2
+holidays==0.38
 idna==3.6
 ipykernel==6.27.1
 ipython==8.18.1
@@ -28,6 +32,7 @@ ipywidgets==8.1.1
 isoduration==20.11.0
 jedi==0.19.1
 Jinja2==3.1.2
+joblib==1.3.2
 json5==0.9.14
 jsonpointer==2.4
 jsonschema==4.20.0
@@ -44,6 +49,8 @@ jupyterlab==4.0.9
 jupyterlab-widgets==3.0.9
 jupyterlab_pygments==0.3.0
 jupyterlab_server==2.25.2
+lightgbm==4.1.0
+Mako==1.3.0
 markdown-it-py==3.0.0
 MarkupSafe==2.1.3
 matplotlib-inline==0.1.6
@@ -56,6 +63,7 @@ nest-asyncio==1.5.8
 notebook==7.0.6
 notebook_shim==0.2.3
 numpy==1.26.2
+optuna==3.5.0
 overrides==7.4.0
 packaging==23.2
 pandas==2.1.4
@@ -85,15 +93,20 @@ rfc3339-validator==0.1.4
 rfc3986-validator==0.1.1
 rich==13.7.0
 rpds-py==0.13.2
+scikit-learn==1.3.2
+scipy==1.11.4
 Send2Trash==1.8.2
 six==1.16.0
 sniffio==1.3.0
 soupsieve==2.5
+SQLAlchemy==2.0.23
 stack-data==0.6.3
 terminado==0.18.0
+threadpoolctl==3.2.0
 tinycss2==1.2.1
 tomli==2.0.1
 tornado==6.4
+tqdm==4.66.1
 traitlets==5.14.0
 typeguard==4.1.4
 types-python-dateutil==2.8.19.14

@@ -32,3 +32,12 @@ cyclical_cols:
   - wday_cos
 train_start: 2019-01-01 00:00:00
 train_end: 2020-12-31 23:00:00
+n_splits: 3
+lgbm_params:
+  "objective": "regression",
+  "metric": "rmse",
+  "boosting_type": "gbdt",
+  learning_rate: 0.0548,
+  n_estimators: 7250,
+  reg_alpha: 0.9520,
+
