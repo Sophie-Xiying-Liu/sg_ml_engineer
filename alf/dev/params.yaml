@@ -11,13 +11,13 @@ curated_data_file: curated_data.csv
 fe_file: features.csv
 input_file: input_file.csv
 preprocessor_file: artifacts/preprocess_unfitted.pkl
+metrics_file: artifacts/metrics.csv
 n_lag: 168
 n_forecast: 24
 cat_cols:
   - weekend
   - work_hour
   - year
-#label_cols:
   - holiday_name
 cyclical_cols:
   - hour_sin
@@ -32,7 +32,6 @@ cyclical_cols:
   - wday_cos
 train_start: 2019-01-01 00:00:00
 train_end: 2020-12-31 23:00:00
-n_splits: 3
 lgbm_params:
   "objective": "regression",
   "metric": "rmse",
@@ -40,4 +39,4 @@ lgbm_params:
   learning_rate: 0.0548,
   n_estimators: 7250,
   reg_alpha: 0.9520,
-
+model_name: lgbm

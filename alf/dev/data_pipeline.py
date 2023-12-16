@@ -114,7 +114,6 @@ def check_timestamp(df, dt_col):
         )
         df = df.append(df_missing)
         df = df.interpolate(method="polynomial", order=2, limit_direction="both")
-        print("interpolate")
 
     return df
 

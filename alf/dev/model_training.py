@@ -19,7 +19,6 @@ from sklearn.model_selection import TimeSeriesSplit
 from sklearn.multioutput import RegressorChain
 import optuna
 from optuna.samplers import TPESampler
-from optuna.integration import LightGBMTuner
 
 
 # Set the current working directory to the directory of this file
@@ -171,11 +170,6 @@ def train_model(X_train_transformed, y_train):
             metrics_dict['mae'].append(mae)
             metrics_dict['r2'].append(r2)
             metrics_dict['mape'].append(mape)
-
-            print(f"RMSE: {rmse}")
-            print(f"MAE: {mae}")
-            print(f"R2: {r2}")
-            print(f"MAPE: {mape}")
         
         average_performance = {
             metric: np.mean(metrics_dict[metric]) for metric in metrics_dict
@@ -193,13 +187,53 @@ def train_model(X_train_transformed, y_train):
 
     # get the best params
     best_params = study.best_params
-    
-    # model_path = os.path.join(os.path.dirname(__file__), f"models/{model_name}.pickle")
-    # with open(model_path, 'wb') as file:
-    #     dump(model, file)
-    # print("model saved")
 
     return best_params
+
+def final_train(
+        best_params,
+        X_train,
+        y_train,
+        X_test,
+        y_test,
+        model_name,
+        metrics_file,
+    ):
+    """Train final model"""
+    model = RegressorChain(
+            base_estimator=lgbm.LGBMRegressor(**best_params),
+            order=[i for i in range(0, 24)], # n_output=24
+            random_state=42,
+        )
+    
+    model.fit(X_train, y_train)
+
+    y_pred = model.predict(X_test)
+
+    rmse = np.sqrt(mean_squared_error(y_test.values.flatten(), y_pred.flatten()))
+    mae = mean_absolute_error(y_test.values.flatten(), y_pred.flatten())
+    r2 = r2_score(y_test.values.flatten(), y_pred.flatten())
+    mape = mean_absolute_percentage_error(y_test.values.flatten(), y_pred.flatten())
+
+    metrics_dict = {
+            "rmse": [],
+            "mae": [],
+            "r2": [],
+            "mape": [],
+        }
+    
+    metrics_dict['rmse'].append(rmse)
+    metrics_dict['mae'].append(mae)
+    metrics_dict['r2'].append(r2)
+    metrics_dict['mape'].append(mape)
+
+    df_metrics = pd.DataFrame(metrics_dict)
+    df_metrics.to_csv(os.path.join(os.path.dirname(__file__), metrics_file), index=False)
+
+    model_path = os.path.join(os.path.dirname(__file__), f"models/{model_name}.pickle")
+    with open(model_path, 'wb') as file:
+        dump(model, file)
+    
 
 
 if __name__ == "__main__":
@@ -211,7 +245,8 @@ if __name__ == "__main__":
     TRAIN_START = params["train_start"]
     TRAIN_END = params["train_end"]
     PREPROCESSOR_FILE = params["preprocessor_file"]
-    N_SPLITS = params["n_splits"]
+    METRICS_FILE = params["metrics_file"]
+    MODEL_NAME = params["model_name"]
 
 
     df = import_fe_file(
@@ -244,12 +279,13 @@ if __name__ == "__main__":
             X_train_transformed=X_train_transformed,
             y_train=y_train,
         )
-
     
-
-    # print(df.head())
-    # print(df.tail())
-    # print(df.shape)
-    # print(df.info())
-    # print(df.describe())
-    # print(df.columns.to_list())
+    final_train(
+            best_params=best_params,
+            X_train=X_train_transformed,
+            y_train=y_train,
+            X_test=X_test_transformed,
+            y_test=y_test,
+            model_name=MODEL_NAME,
+            metrics_file=METRICS_FILE,
+        )

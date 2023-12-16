@@ -109,9 +109,16 @@ For example, a same set of data should generate the same results in both train a
 
 Do it especially when integrating the model in their operational systems.
 
-### # 8 Measure the performance differences between models
+### #8 Measure the performance differences between models
 
 Look for patterns in the measured errors which are outside of the current feature set, and create new features. 
 
 
 This is far away from completion but I will take a break given the time constrains, and also because I have less experience in the deployment phase, thus this part is expected to be added at a later stage. 
+
+
+### References
+
+[Rules of Machine Learning: Best Practices for ML Engineering](https://martin.zinkevich.org/rules_of_ml/rules_of_ml.pdf?ref=jeremyjordan.me), Martin Zinkevich.
+
+[MLOps Principles](https://ml-ops.org/content/mlops-principles#ml-based-software-delivery-metrics-4-metrics-from-accelerate).

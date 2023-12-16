@@ -170,7 +170,6 @@ def fe_pipeline(
     ]
     num_cols = [
         col for col in pipeline_cols if col not in cat_cols\
-            # and col not in label_cols\
             and col not in cyclical_cols
     ]
     
@@ -185,17 +184,12 @@ def fe_pipeline(
             ("encoder", OneHotEncoder(sparse_output=False, handle_unknown="ignore")),
         ]
     )
-    # label_transformer = Pipeline(
-    #     steps=[
-    #         ("encoder", LabelEncoder()),
-    #     ]
-    # )
 
     preprocessor = ColumnTransformer(
         transformers=[
             ("numeric", numeric_transformer, num_cols),
             ("categorical", categorical_transformer, cat_cols),
-            # ("label", label_transformer, label_cols),
+
         ],
         remainder="passthrough",
     )
@@ -218,7 +212,6 @@ if __name__ == "__main__":
     N_LAG = params["n_lag"]
     TARGET_COL = params["target_col"]
     CAT_COLS = params["cat_cols"]
-    # LABEL_COLS = params["label_cols"]
     CYCLICAL_COLS = params["cyclical_cols"]
     FE_FILE = params["fe_file"]
     PREPROCESSOR_FILE = params["preprocessor_file"]
@@ -241,6 +234,5 @@ if __name__ == "__main__":
         target_col=TARGET_COL,
         cat_cols=CAT_COLS,
         cyclical_cols=CYCLICAL_COLS,
-        # label_cols=LABEL_COLS,
         preprocessor_file=PREPROCESSOR_FILE
     )
