@@ -9,6 +9,7 @@ target_col:
   active_losses
 curated_data_file: curated_data.csv
 fe_file: features.csv
+input_file: input_file.csv
 preprocessor_file: artifacts/preprocess_unfitted.pkl
 n_lag: 168
 n_forecast: 24

@@ -215,13 +215,13 @@ if __name__ == "__main__":
     holiday_df = create_holiday(df, DT_COL)
     df = create_time_features(df, dt_col=DT_COL, holiday_df=holiday_df)\
         .pipe(cyclical_encoding)\
-            .pipe(
-                create_target_lags,
-                dt_col=DT_COL,
-                n_lag=N_LAG,
-                target_col=TARGET_COL, 
-                fe_file=FE_FILE
-            )
+        .pipe(
+            create_target_lags,
+            dt_col=DT_COL,
+            n_lag=N_LAG,
+            target_col=TARGET_COL, 
+            fe_file=FE_FILE
+        )
     
     fe_pipeline(
         fe_file=FE_FILE,

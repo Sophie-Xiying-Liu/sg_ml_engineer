@@ -148,4 +148,4 @@ if __name__ == "__main__":
 
     df = create_df(data_files=DATA_FILES, dt_col=DT_COL)\
             .pipe(check_timestamp, dt_col=DT_COL)\
-                .pipe(clean_data, CURATED_DATA_FILE)
+                .pipe(clean_data, curated_data_file=CURATED_DATA_FILE)
