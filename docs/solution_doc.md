@@ -59,6 +59,8 @@ Given the requirement, this project is set up as the following steps shows, with
 
 3. venv and requirements.txt
 
+An important but missing part is the test. 
+
 Next, I will try to answer the three main questions raised in the challenge.
 
 ### 1. Checklist to bring the model into production
