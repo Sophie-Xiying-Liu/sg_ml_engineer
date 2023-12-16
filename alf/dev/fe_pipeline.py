@@ -25,6 +25,11 @@ if "__file__" not in locals() or __file__ == "<input>":
 filedir = pathlib.Path(os.path.dirname(__file__))
 datadir = filedir / "data"
 
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+
 # Load the YAML file
 yaml_path = os.path.join(os.path.dirname(__file__), "params.yaml")
 try:
@@ -136,10 +141,9 @@ def create_target_lags(df, dt_col, n_lag, target_col, fe_file):
 
     hours = df[dt_col].tolist()
     lag_lists = []
+
     for hour_idx, hour in enumerate(hours):
-        prior_cutoff = (hour - pd.Timedelta("1 hour"))
-        # .strftime('%Y-%m-%d %H:%M:%S')
-        # prior_cutoff = pd.to_datetime(prior_cutoff)
+        prior_cutoff = hour - pd.Timedelta("1 hour")
         lags = df.query(f"{dt_col} <= @prior_cutoff").tail(n_lag)[target_col].tolist()
         lag_lists.append(lags)
     lag_df = pd.DataFrame(lag_lists).add_prefix("target_lag_")
@@ -150,7 +154,7 @@ def create_target_lags(df, dt_col, n_lag, target_col, fe_file):
     return df
 
 def fe_pipeline(
-        df,
+        fe_file,
         dt_col,
         target_col,
         cat_cols,
@@ -158,16 +162,13 @@ def fe_pipeline(
         preprocessor_file,
         ):
     """Feature engineering pipeline."""
+    df = pd.read_csv(os.path.join(datadir, fe_file))
     pipeline_cols = [
         col for col in df.columns if col not in [dt_col, target_col]
     ]
     num_cols = [
         col for col in pipeline_cols if col not in [cat_cols, cyclical_cols]
     ]
-    print(f"num_cols: {num_cols}")
-    print(f"cat_cols: {cat_cols}")
-    print(f"cyclical_cols: {cyclical_cols}")
-    print(f"pipeline_cols: {pipeline_cols}")
 
     numeric_transformer = Pipeline(
         steps=[("scaler", StandardScaler())]
@@ -187,7 +188,8 @@ def fe_pipeline(
         ],
         remainder="passthrough",
     )
-    print("preprocessor created.")
+
+    logging.info("Preprocessor created.")
 
     dump(
         preprocessor,
@@ -211,11 +213,18 @@ if __name__ == "__main__":
 
     df = import_curated_data(CURATED_DATA_FILE, dt_col=DT_COL)
     holiday_df = create_holiday(df, DT_COL)
-    df_features = create_time_features(df, dt_col=DT_COL, holiday_df=holiday_df)\
-        .pipe(cyclical_encoding)
+    df = create_time_features(df, dt_col=DT_COL, holiday_df=holiday_df)\
+        .pipe(cyclical_encoding)\
+            .pipe(
+                create_target_lags,
+                dt_col=DT_COL,
+                n_lag=N_LAG,
+                target_col=TARGET_COL, 
+                fe_file=FE_FILE
+            )
     
     fe_pipeline(
-        df=df_features,
+        fe_file=FE_FILE,
         dt_col=DT_COL,
         target_col=TARGET_COL,
         cat_cols=CAT_COLS,

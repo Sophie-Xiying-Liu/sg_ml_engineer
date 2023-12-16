@@ -11,7 +11,7 @@ curated_data_file: curated_data.csv
 fe_file: features.csv
 preprocessor_file: artifacts/preprocess_unfitted.pkl
 n_lag: 168
-n_forecast: 23
+n_forecast: 24
 cat_cols:
   - weekend
   - workhour
